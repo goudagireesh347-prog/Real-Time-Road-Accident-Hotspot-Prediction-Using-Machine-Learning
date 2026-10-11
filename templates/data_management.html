@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}Data Management – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-database text-primary me-2"></i> Accident Data Management Hub</h2>
+            <p class="text-muted mb-0">Inspect, curate, upload CSV records, and trigger automated pipeline retraining</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadCsvModal">
+                <i class="fa-solid fa-file-arrow-up me-1"></i> Upload CSV Dataset
+            </button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRecordModal">
+                <i class="fa-solid fa-plus me-1"></i> Add Accident Record
+            </button>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="card shadow-sm border mb-4 bg-white">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('data_management') }}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Search by Location / Corridor</label>
+                    <input type="text" name="q" class="form-control" placeholder="e.g. Silk Board, Hebbal..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Severity Filter</label>
+                    <select name="severity" class="form-select">
+                        <option value="">All Severities</option>
+                        <option value="Fatal" {% if selected_severity == 'Fatal' %}selected{% endif %}>Fatal</option>
+                        <option value="Severe" {% if selected_severity == 'Severe' %}selected{% endif %}>Severe</option>
+                        <option value="Major" {% if selected_severity == 'Major' %}selected{% endif %}>Major</option>
+                        <option value="Moderate" {% if selected_severity == 'Moderate' %}selected{% endif %}>Moderate</option>
+                        <option value="Minor" {% if selected_severity == 'Minor' %}selected{% endif %}>Minor</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Risk Level</label>
+                    <select name="risk" class="form-select">
+                        <option value="">All Risk Levels</option>
+                        <option value="High" {% if selected_risk == 'High' %}selected{% endif %}>High Risk</option>
+                        <option value="Medium" {% if selected_risk == 'Medium' %}selected{% endif %}>Medium Risk</option>
+                        <option value="Low" {% if selected_risk == 'Low' %}selected{% endif %}>Low Risk</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark w-100">
+                        <i class="fa-solid fa-filter me-1"></i> Filter
+                    </button>
+                    <a href="{{ url_for('data_management') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Accident Records Table -->
+    <div class="card shadow-sm border">
+        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-table-list text-primary me-2"></i> Database Accident Records</span>
+            <span class="badge bg-light text-dark border">Total Matching: {{ total_records }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Date & Time</th>
+                            <th>Location / Coords</th>
+                            <th>Weather & Road</th>
+                            <th>Traffic / Speed</th>
+                            <th>Severity</th>
+                            <th>Risk Level</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in accidents %}
+                        <tr>
+                            <td class="fw-bold">#{{ a.id }}</td>
+                            <td>
+                                <div>{{ a.accident_date }}</div>
+                                <small class="text-muted">{{ a.accident_time }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ a.location }}</div>
+                                <small class="text-muted">{{ a.latitude }}, {{ a.longitude }}</small>
+                            </td>
+                            <td>
+                                <div>{{ a.weather }}</div>
+                                <small class="text-muted">{{ a.road_condition }} ({{ a.road_type }})</small>
+                            </td>
+                            <td>
+                                <div>{{ a.traffic_volume }} vph</div>
+                                <small class="text-muted">Limit: {{ a.speed_limit }} km/h</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if a.severity in ['Fatal', 'Severe'] %}bg-danger{% elif a.severity == 'Major' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ a.severity }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if a.risk_level == 'High' %}badge-risk-high{% elif a.risk_level == 'Medium' %}badge-risk-medium{% else %}badge-risk-low{% endif %}">
+                                    {{ a.risk_level }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('delete_accident', record_id=a.id) }}" onsubmit="return confirm('Are you sure you want to delete record #{{ a.id }}?');" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Record">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No accident records found matching criteria.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Pagination Footer -->
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Page {{ page }} of {{ total_pages }}</span>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('data_management', page=page-1, q=search_query, severity=selected_severity, risk=selected_risk) }}">Previous</a>
+                </li>
+                {% endif %}
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('data_management', page=page+1, q=search_query, severity=selected_severity, risk=selected_risk) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Record -->
+<div class="modal fade" id="addRecordModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle text-primary me-2"></i> Add Accident Incident Record</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_accident') }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Accident Date</label>
+                            <input type="date" name="accident_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Accident Time (HH:MM)</label>
+                            <input type="text" name="accident_time" class="form-control" placeholder="18:30" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Location Name</label>
+                            <input type="text" name="location" class="form-control" placeholder="Silk Board Junction" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Latitude</label>
+                            <input type="number" step="0.000001" name="latitude" class="form-control" value="12.9176" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Longitude</label>
+                            <input type="number" step="0.000001" name="longitude" class="form-control" value="77.6234" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Weather</label>
+                            <select name="weather" class="form-select">
+                                <option value="Clear">Clear</option>
+                                <option value="Rainy">Rainy</option>
+                                <option value="Foggy">Foggy</option>
+                                <option value="Thunderstorm">Thunderstorm</option>
+                                <option value="Overcast">Overcast</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Road Condition</label>
+                            <select name="road_condition" class="form-select">
+                                <option value="Dry">Dry</option>
+                                <option value="Wet">Wet</option>
+                                <option value="Damaged">Damaged</option>
+                                <option value="Potholed">Potholed</option>
+                                <option value="Under Construction">Under Construction</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Road Type</label>
+                            <select name="road_type" class="form-select">
+                                <option value="Major Intersection">Major Intersection</option>
+                                <option value="Arterial Road">Arterial Road</option>
+                                <option value="Highway">Highway</option>
+                                <option value="Elevated Expressway">Elevated Expressway</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Traffic Volume</label>
+                            <input type="number" name="traffic_volume" class="form-control" value="850" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Speed Limit</label>
+                            <input type="number" name="speed_limit" class="form-control" value="50" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Vehicles Involved</label>
+                            <input type="number" name="vehicle_count" class="form-control" value="2" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Visibility (km)</label>
+                            <input type="number" step="0.1" name="visibility" class="form-control" value="4.5" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Severity</label>
+                            <select name="severity" class="form-select">
+                                <option value="Minor">Minor</option>
+                                <option value="Moderate">Moderate</option>
+                                <option value="Major">Major</option>
+                                <option value="Severe">Severe</option>
+                                <option value="Fatal">Fatal</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Risk Level</label>
+                            <select name="risk_level" class="form-select">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Upload CSV -->
+<div class="modal fade" id="uploadCsvModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-csv text-primary me-2"></i> Upload Accident CSV Dataset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('upload_csv') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <p class="small text-muted">
+                        Select a CSV file containing accident records. Required columns include: <code>latitude</code>, <code>longitude</code>, <code>accident_date</code>, <code>weather</code>, <code>risk_level</code>, etc.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Choose CSV File</label>
+                        <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="retrain" value="1" id="retrainSwitch" checked>
+                        <label class="form-check-label small fw-semibold" for="retrainSwitch">
+                            Retrain Random Forest model after import
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Validate & Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}About Project – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Banner -->
+    <div class="p-5 mb-4 bg-white rounded-4 shadow-sm border position-relative overflow-hidden">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge bg-primary px-3 py-2 text-uppercase mb-3">MCA Final Year Major Project</span>
+                <h1 class="display-5 fw-bold text-dark mb-3">Real-Time Road Accident Hotspot Prediction and Visualization System</h1>
+                <p class="lead text-secondary mb-4">
+                    An intelligent, full-stack spatial decision support platform engineered for municipal planners, traffic police departments, and civil authorities. Leverages spatial clustering with GeoPandas and Random Forest classification to forecast risk levels and identify accident blackspots.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 shadow-sm">
+                        <i class="fa-solid fa-gauge-high me-2"></i> Launch Dashboard
+                    </a>
+                    <a href="{{ url_for('predict') }}" class="btn btn-outline-dark btn-lg px-4">
+                        <i class="fa-solid fa-crosshairs me-2"></i> Real-Time Prediction
+                    </a>
+                    <a href="{{ url_for('hotspots') }}" class="btn btn-outline-danger btn-lg px-4">
+                        <i class="fa-solid fa-fire-flame-curved me-2"></i> Hotspot Simulator
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center d-none d-lg-block">
+                <div class="p-4 rounded-4 bg-light border shadow-sm">
+                    <i class="fa-solid fa-shield-halved text-primary display-1 mb-3"></i>
+                    <h5 class="fw-bold">RoadSafe AI Engine</h5>
+                    <p class="small text-muted mb-0">Random Forest Classifier • GeoPandas CRS EPSG:4326 • Folium Visualizer</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card kpi-card h-100 p-3 bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-primary text-white"><i class="fa-solid fa-car-burst"></i></div>
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ total_accidents }}</h4>
+                        <small class="text-muted">Total Accident Records</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card h-100 p-3 bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-danger text-white"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-danger">{{ high_risk_count }}</h4>
+                        <small class="text-muted">High-Risk Incidents</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card h-100 p-3 bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-warning text-white"><i class="fa-solid fa-location-crosshairs"></i></div>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-warning">{{ zones_count }}</h4>
+                        <small class="text-muted">Monitored Corridor Zones</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card h-100 p-3 bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-success text-white"><i class="fa-solid fa-microchip"></i></div>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-success">81.1%</h4>
+                        <small class="text-muted">Model Test Accuracy</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Technology Architecture -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card h-100 p-4">
+                <h4 class="fw-bold mb-3"><i class="fa-solid fa-diagram-project text-primary me-2"></i> Project Architecture & Pipeline</h4>
+                <p class="text-muted">
+                    The system implements an end-to-end data science and full-stack software engineering architecture:
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-light border">
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-database text-info me-2"></i> 1. Storage & Persistence</h6>
+                            <p class="small text-muted mb-0">MySQL / SQLAlchemy persistent store with indexing on latitude, longitude, dates, and risk levels.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-light border">
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-earth-americas text-success me-2"></i> 2. Geospatial Processing</h6>
+                            <p class="small text-muted mb-0">GeoPandas spatial point mapping, CRS projection (EPSG:4326), and density grouping.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-light border">
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-tree text-warning me-2"></i> 3. Machine Learning Model</h6>
+                            <p class="small text-muted mb-0">Scikit-learn Random Forest Classifier trained with 120 estimators, balanced weights, and feature importance analysis.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-light border">
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-map text-danger me-2"></i> 4. Interactive Cartography</h6>
+                            <p class="small text-muted mb-0">Folium, HeatMap, and CircleMarker visual layers with live scenario risk overlays.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 p-4">
+                <h4 class="fw-bold mb-3"><i class="fa-solid fa-user-lock text-primary me-2"></i> Demo Credentials</h4>
+                <p class="text-muted small">Role-Based Access Control (RBAC) is implemented with hashed credentials:</p>
+                <div class="list-group list-group-flush mb-3">
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-danger">Administrator</span>
+                                <div class="fw-bold mt-1">Username: <code>admin</code></div>
+                                <div class="small text-muted">Password: <code>admin123</code></div>
+                            </div>
+                            <span class="small text-muted">Full CRUD, Retrain</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-primary">City Planner</span>
+                                <div class="fw-bold mt-1">Username: <code>planner</code></div>
+                                <div class="small text-muted">Password: <code>planner123</code></div>
+                            </div>
+                            <span class="small text-muted">Inference, Maps</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('login') }}" class="btn btn-dark w-100">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i> Go to Sign In
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

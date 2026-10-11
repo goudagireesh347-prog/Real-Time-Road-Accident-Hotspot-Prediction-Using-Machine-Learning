@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Top Header & Filter Widget Row -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-gauge-high text-primary me-2"></i> Executive Hotspot Dashboard</h2>
+            <p class="text-muted mb-0">Real-time surveillance & machine learning spatial risk assessment</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-white text-dark border p-2 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-cloud-sun text-warning"></i> Active Weather: <b>Clear / Monsoon</b>
+            </span>
+            <span class="badge bg-white text-dark border p-2 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-clock text-info"></i> Peak Time: <b>18:00 - 21:00</b>
+            </span>
+            <a href="{{ url_for('predict') }}" class="btn btn-primary">
+                <i class="fa-solid fa-crosshairs me-1"></i> New Prediction
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Metric Cards Row -->
+    <div class="row g-3 mb-4">
+        <!-- Total Accidents -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Total Accidents</span>
+                        <h3 class="fw-bold my-1">{{ total_accidents }}</h3>
+                        <small class="text-muted"><i class="fa-solid fa-database text-primary me-1"></i> Historical Dataset</small>
+                    </div>
+                    <div class="kpi-icon bg-primary text-white"><i class="fa-solid fa-car-burst"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- High-Risk Locations -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">High-Risk Incidents</span>
+                        <h3 class="fw-bold my-1 text-danger">{{ high_risk }}</h3>
+                        <small class="text-danger fw-semibold"><i class="fa-solid fa-arrow-trend-up me-1"></i> Immediate Focus</small>
+                    </div>
+                    <div class="kpi-icon bg-danger text-white"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medium-Risk Locations -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Medium-Risk Incidents</span>
+                        <h3 class="fw-bold my-1 text-warning">{{ med_risk }}</h3>
+                        <small class="text-warning fw-semibold"><i class="fa-solid fa-shield-virus me-1"></i> Regular Patrol</small>
+                    </div>
+                    <div class="kpi-icon bg-warning text-white"><i class="fa-solid fa-circle-exclamation"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low-Risk & Zones -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card kpi-card p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Low-Risk Incidents</span>
+                        <h3 class="fw-bold my-1 text-success">{{ low_risk }}</h3>
+                        <small class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> {{ hotspots_count }} Active Zones</small>
+                    </div>
+                    <div class="kpi-icon bg-success text-white"><i class="fa-solid fa-shield-halved"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map & Prediction Summary Row -->
+    <div class="row g-4 mb-4">
+        <!-- Interactive Folium Accident Hotspot Map -->
+        <div class="col-xl-8">
+            <div class="card h-100 shadow-sm border">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <div class="fw-bold">
+                        <i class="fa-solid fa-map-location-dot text-primary me-2"></i> Interactive Accident Hotspot Map
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-danger">Red: High</span>
+                        <span class="badge bg-warning text-dark">Orange: Medium</span>
+                        <span class="badge bg-success">Green: Low</span>
+                        <a href="{{ url_for('map_view') }}" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="fa-solid fa-expand"></i> Full Map
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0" style="min-height: 480px;">
+                    <div class="w-100 h-100" style="min-height: 480px; position: relative;">
+                        {{ map_html | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Summary & Quick Hotspots -->
+        <div class="col-xl-4">
+            <!-- ML Model Performance Card -->
+            <div class="card shadow-sm border mb-4">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-microchip text-primary me-2"></i> Model Prediction Summary
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-muted">Algorithm</span>
+                        <span class="badge bg-primary">Random Forest Classifier</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-muted">Test Accuracy</span>
+                        <span class="fw-bold text-success fs-5">{{ model_accuracy }}%</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-muted">Decision Trees</span>
+                        <span class="fw-bold">120 Estimators</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-muted">Spatial Framework</span>
+                        <span class="fw-bold">GeoPandas (EPSG:4326)</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ model_accuracy }}%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted small">
+                        <span>Reliability: High</span>
+                        <a href="{{ url_for('model_evaluation') }}" class="text-decoration-none">View Full Report &rarr;</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Accident-Prone Zones -->
+            <div class="card shadow-sm border">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-fire text-danger me-2"></i> Prominent Hotspot Zones</span>
+                    <a href="{{ url_for('hotspots') }}" class="btn btn-sm btn-link p-0 text-decoration-none">Scenario &rarr;</a>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for spot in hotspots %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                            <div>
+                                <span class="fw-semibold text-dark">{{ spot.location }}</span>
+                                <div class="text-muted small">{{ spot.total_accidents }} Incidents • {{ spot.primary_weather }}</div>
+                            </div>
+                            <span class="badge {% if spot.dominant_risk == 'High' %}bg-danger{% elif spot.dominant_risk == 'Medium' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                {{ spot.dominant_risk }} Risk
+                            </span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-muted text-center py-3">No hotspots recorded</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trend Chart & Recent Predictions Row -->
+    <div class="row g-4">
+        <!-- Hourly Accident Trend Chart -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="fa-solid fa-chart-line text-primary me-2"></i> Diurnal Accident Trend (24-Hour Cycle)</span>
+                    <a href="{{ url_for('analytics') }}" class="btn btn-sm btn-outline-secondary">All Charts</a>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 260px;">
+                        <canvas id="dashboardTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Predictions Log -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Recent Real-Time Predictions
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Coords</th>
+                                    <th>Traffic</th>
+                                    <th>Risk</th>
+                                    <th>Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pred in recent_predictions %}
+                                <tr>
+                                    <td class="small">{{ pred.latitude }}, {{ pred.longitude }}</td>
+                                    <td>{{ pred.traffic_volume }} vph</td>
+                                    <td>
+                                        <span class="badge {% if pred.predicted_risk == 'High' %}badge-risk-high{% elif pred.predicted_risk == 'Medium' %}badge-risk-medium{% else %}badge-risk-low{% endif %}">
+                                            {{ pred.predicted_risk }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-semibold">{{ (pred.probability * 100) | round(1) }}%</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">No live predictions recorded yet. Run one now!</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

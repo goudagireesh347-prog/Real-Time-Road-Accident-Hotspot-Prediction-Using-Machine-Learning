@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Interactive Accident Map – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-map-location-dot text-primary me-2"></i> Interactive Spatial Accident Map</h2>
+            <p class="text-muted mb-0">Folium GIS Layer with HeatMap density, GeoPandas projection, and risk color markers</p>
+        </div>
+        <!-- Map Filter Controls Form -->
+        <form method="GET" action="{{ url_for('map_view') }}" class="d-flex flex-wrap align-items-center gap-2 bg-white p-2 rounded border shadow-sm">
+            <label class="small fw-semibold text-muted">Risk Filter:</label>
+            <select name="risk" class="form-select form-select-sm" style="width: 130px;" onchange="this.form.submit()">
+                <option value="" {% if not selected_risk %}selected{% endif %}>All Levels</option>
+                <option value="High" {% if selected_risk == 'High' %}selected{% endif %}>High Risk</option>
+                <option value="Medium" {% if selected_risk == 'Medium' %}selected{% endif %}>Medium Risk</option>
+                <option value="Low" {% if selected_risk == 'Low' %}selected{% endif %}>Low Risk</option>
+            </select>
+
+            <div class="form-check form-switch ms-2">
+                <input class="form-check-input" type="checkbox" name="heatmap" value="true" id="heatSwitch" {% if show_heatmap %}checked{% endif %} onchange="this.form.submit()">
+                <label class="form-check-label small fw-semibold" for="heatSwitch">HeatMap</label>
+            </div>
+
+            <a href="{{ url_for('map_view') }}" class="btn btn-sm btn-outline-secondary ms-1">Reset</a>
+        </form>
+    </div>
+
+    <div class="row g-3">
+        <!-- Main Map Display -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border p-0 map-frame-container" style="height: 720px;">
+                <div class="w-100 h-100 position-relative">
+                    {{ map_html | safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Hotspot Legend & Zone Directory -->
+        <div class="col-lg-3">
+            <!-- Map Legend -->
+            <div class="card shadow-sm border mb-3">
+                <div class="card-header bg-white fw-bold"><i class="fa-solid fa-layer-group text-primary me-2"></i> Map Legend</div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="rounded-circle d-inline-block me-2" style="width: 14px; height: 14px; background-color: #dc3545;"></span>
+                        <span class="small fw-semibold">High Risk Blackspot (&ge; 70% Prob)</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="rounded-circle d-inline-block me-2" style="width: 14px; height: 14px; background-color: #fd7e14;"></span>
+                        <span class="small fw-semibold">Medium Risk Zone (40% - 69%)</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="rounded-circle d-inline-block me-2" style="width: 14px; height: 14px; background-color: #198754;"></span>
+                        <span class="small fw-semibold">Low Risk Zone (&lt; 40%)</span>
+                    </div>
+                    <hr>
+                    <div class="small text-muted">
+                        <i class="fa-solid fa-hand-pointer text-primary me-1"></i> Click on any circle or point marker to inspect real-time accident statistics, historical frequency, and local traffic conditions.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Identified Clusters Directory -->
+            <div class="card shadow-sm border" style="max-height: 480px; overflow-y: auto;">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center sticky-top">
+                    <span><i class="fa-solid fa-fire text-danger me-2"></i> Spatial Hotspots</span>
+                    <span class="badge bg-secondary">{{ hotspots | length }}</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for h in hotspots %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="fw-bold small text-dark">{{ h.location }}</span>
+                            <span class="badge {% if h.dominant_risk == 'High' %}bg-danger{% elif h.dominant_risk == 'Medium' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                {{ h.dominant_risk }}
+                            </span>
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <span><i class="fa-solid fa-car-crash me-1"></i> {{ h.total_accidents }} crashes</span> •
+                            <span>{{ h.avg_traffic }} vph</span>
+                        </div>
+                        <div class="small text-secondary">
+                            Coords: {{ h.latitude }}, {{ h.longitude }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="list-group-item text-center text-muted small py-3">No hotspots found matching filter.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

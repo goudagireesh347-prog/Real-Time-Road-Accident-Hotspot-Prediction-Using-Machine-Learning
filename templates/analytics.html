@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Accident Analytics – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="analyticsChartsWrapper">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Comprehensive Accident Analytics</h2>
+            <p class="text-muted mb-0">Dynamic exploratory charts fed live from Flask REST API endpoints</p>
+        </div>
+        <button class="btn btn-outline-primary" onclick="loadAnalyticsCharts()">
+            <i class="fa-solid fa-arrows-rotate me-1"></i> Refresh Data
+        </button>
+    </div>
+
+    <!-- 8 Analytics Charts Grid -->
+    <div class="row g-4">
+        <!-- 1. Accidents by Hour -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-clock text-primary me-2"></i> 1. Accidents by Hour of Day (0 - 23)
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartHour"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Accidents by Day of Week -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-calendar-day text-indigo me-2"></i> 2. Accidents by Day of Week
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartDay"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Accidents by Month -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-calendar-days text-info me-2"></i> 3. Accidents by Month (Seasonal Variation)
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartMonth"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Accidents by Weather -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-cloud-sun-rain text-primary me-2"></i> 4. Accidents by Weather Condition
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartWeather"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Accidents by Road Condition -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-road text-warning me-2"></i> 5. Accidents by Road Surface Condition
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartRoad"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Accidents by Severity -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-kit-medical text-danger me-2"></i> 6. Accidents by Severity
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartSeverity"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Accidents by Location -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-location-dot text-purple me-2"></i> 7. Accidents by Location (Top 10)
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartLocation"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. High-Risk Locations -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> 8. Critical High-Risk Locations
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartHighRisk"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

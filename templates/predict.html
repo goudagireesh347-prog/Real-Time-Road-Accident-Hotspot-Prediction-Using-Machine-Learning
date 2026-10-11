@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Real-Time Risk Prediction – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-crosshairs text-primary me-2"></i> Real-Time Accident Risk Prediction</h2>
+            <p class="text-muted mb-0">Multi-parametric machine learning spatial risk inference engine</p>
+        </div>
+        <a href="{{ url_for('hotspots') }}" class="btn btn-outline-primary">
+            <i class="fa-solid fa-fire-flame-curved me-1"></i> Multi-Zone Hotspot Simulator &rarr;
+        </a>
+    </div>
+
+    <!-- Quick Zone Presets Bar -->
+    <div class="card p-3 mb-4 shadow-sm border bg-white">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="small fw-bold text-muted text-uppercase me-2"><i class="fa-solid fa-bolt text-warning me-1"></i> Quick Presets:</span>
+            {% for z in zones %}
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="prefillZone('{{ z.name }}', {{ z.lat }}, {{ z.lon }}, {{ z.speed_limit }}, '{{ z.road_type }}', 980)">
+                {{ z.name }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Input Form Column -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold">
+                    <i class="fa-solid fa-sliders text-primary me-2"></i> Environmental & Spatial Input Parameters
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('predict') }}">
+                        <div class="row g-3">
+                            <!-- Latitude & Longitude -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Latitude</label>
+                                <input type="number" step="0.000001" class="form-control" id="latitude" name="latitude" value="{{ form_data.latitude }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Longitude</label>
+                                <input type="number" step="0.000001" class="form-control" id="longitude" name="longitude" value="{{ form_data.longitude }}" required>
+                            </div>
+
+                            <!-- Traffic Volume & Hour -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Traffic Volume (vehicles/hr)</label>
+                                <input type="number" class="form-control" id="traffic_volume" name="traffic_volume" value="{{ form_data.traffic_volume }}" min="50" max="2500" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Time of Day (Hour: 0 - 23)</label>
+                                <input type="number" class="form-control" name="hour" value="{{ form_data.hour }}" min="0" max="23" required>
+                            </div>
+
+                            <!-- Day of Week & Month -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Day of Week</label>
+                                <select class="form-select" name="day_of_week">
+                                    <option value="0" {% if form_data.day_of_week == 0 %}selected{% endif %}>Monday</option>
+                                    <option value="1" {% if form_data.day_of_week == 1 %}selected{% endif %}>Tuesday</option>
+                                    <option value="2" {% if form_data.day_of_week == 2 %}selected{% endif %}>Wednesday</option>
+                                    <option value="3" {% if form_data.day_of_week == 3 %}selected{% endif %}>Thursday</option>
+                                    <option value="4" {% if form_data.day_of_week == 4 %}selected{% endif %}>Friday</option>
+                                    <option value="5" {% if form_data.day_of_week == 5 %}selected{% endif %}>Saturday</option>
+                                    <option value="6" {% if form_data.day_of_week == 6 %}selected{% endif %}>Sunday</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Month</label>
+                                <select class="form-select" name="month">
+                                    {% for m_num in range(1, 13) %}
+                                    <option value="{{ m_num }}" {% if form_data.month == m_num %}selected{% endif %}>Month {{ m_num }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Weather & Road Condition -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Weather Condition</label>
+                                <select class="form-select" name="weather">
+                                    <option value="Clear" {% if form_data.weather == 'Clear' %}selected{% endif %}>Clear</option>
+                                    <option value="Rainy" {% if form_data.weather == 'Rainy' %}selected{% endif %}>Rainy</option>
+                                    <option value="Foggy" {% if form_data.weather == 'Foggy' %}selected{% endif %}>Foggy</option>
+                                    <option value="Overcast" {% if form_data.weather == 'Overcast' %}selected{% endif %}>Overcast</option>
+                                    <option value="Thunderstorm" {% if form_data.weather == 'Thunderstorm' %}selected{% endif %}>Thunderstorm</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Road Condition</label>
+                                <select class="form-select" name="road_condition">
+                                    <option value="Dry" {% if form_data.road_condition == 'Dry' %}selected{% endif %}>Dry</option>
+                                    <option value="Wet" {% if form_data.road_condition == 'Wet' %}selected{% endif %}>Wet</option>
+                                    <option value="Damaged" {% if form_data.road_condition == 'Damaged' %}selected{% endif %}>Damaged</option>
+                                    <option value="Under Construction" {% if form_data.road_condition == 'Under Construction' %}selected{% endif %}>Under Construction</option>
+                                    <option value="Potholed" {% if form_data.road_condition == 'Potholed' %}selected{% endif %}>Potholed</option>
+                                </select>
+                            </div>
+
+                            <!-- Road Type & Speed Limit -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Road Type</label>
+                                <select class="form-select" id="road_type" name="road_type">
+                                    <option value="Major Intersection">Major Intersection</option>
+                                    <option value="Arterial Road">Arterial Road</option>
+                                    <option value="Highway">Highway</option>
+                                    <option value="Elevated Expressway">Elevated Expressway</option>
+                                    <option value="Arterial Bottleneck">Arterial Bottleneck</option>
+                                    <option value="Transit Terminal Zone">Transit Terminal Zone</option>
+                                    <option value="Local Street">Local Street</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Speed Limit (km/h)</label>
+                                <input type="number" class="form-control" id="speed_limit" name="speed_limit" value="{{ form_data.speed_limit }}" min="20" max="120" required>
+                            </div>
+
+                            <!-- Visibility, Previous Accidents & Vehicle Count -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Visibility (km)</label>
+                                <input type="number" step="0.1" class="form-control" name="visibility" value="{{ form_data.visibility }}" min="0.1" max="15.0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Previous Accidents</label>
+                                <input type="number" class="form-control" name="previous_accidents" value="{{ form_data.previous_accidents }}" min="0" max="50" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Vehicle Count Involved</label>
+                                <input type="number" class="form-control" name="vehicle_count" value="{{ form_data.vehicle_count }}" min="1" max="10" required>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm fw-bold">
+                                    <i class="fa-solid fa-calculator me-2"></i> PREDICT ACCIDENT RISK
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Results Column -->
+        <div class="col-lg-6">
+            {% if result %}
+            <div class="card shadow-sm border mb-4 {% if result.risk_level == 'High' %}prediction-box-high{% elif result.risk_level == 'Medium' %}prediction-box-medium{% else %}prediction-box-low{% endif %}">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="text-uppercase small fw-bold text-muted">Predicted Accident Risk Level</span>
+                            <h2 class="fw-bold mb-0 {% if result.risk_level == 'High' %}text-danger{% elif result.risk_level == 'Medium' %}text-warning{% else %}text-success{% endif %}">
+                                <i class="fa-solid {% if result.risk_level == 'High' %}fa-triangle-exclamation{% elif result.risk_level == 'Medium' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} me-2"></i>
+                                {{ result.risk_level }} Risk
+                            </h2>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-uppercase small fw-bold text-muted">Confidence Probability</span>
+                            <h3 class="fw-bold mb-0 text-dark">{{ (result.probability * 100) | round(1) }}%</h3>
+                        </div>
+                    </div>
+
+                    <!-- Probability Bars Breakdown -->
+                    <div class="mb-4">
+                        <label class="small text-muted fw-semibold mb-1">Class Probability Distribution:</label>
+                        <div class="progress" style="height: 18px;">
+                            <div class="progress-bar bg-danger" style="width: {{ (result.class_probabilities.High or 0) * 100 }}%">
+                                High: {{ ((result.class_probabilities.High or 0) * 100) | round(0) }}%
+                            </div>
+                            <div class="progress-bar bg-warning text-dark" style="width: {{ (result.class_probabilities.Medium or 0) * 100 }}%">
+                                Med: {{ ((result.class_probabilities.Medium or 0) * 100) | round(0) }}%
+                            </div>
+                            <div class="progress-bar bg-success" style="width: {{ (result.class_probabilities.Low or 0) * 100 }}%">
+                                Low: {{ ((result.class_probabilities.Low or 0) * 100) | round(0) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Major Contributing Factors -->
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list-check text-primary me-2"></i> Major Contributing Factors</h5>
+                    <div class="list-group list-group-flush mb-2">
+                        {% for factor in result.contributing_factors %}
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge {% if factor.impact == 'High Positive' %}bg-danger{% elif factor.impact == 'Medium Positive' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ factor.factor }}
+                                </span>
+                            </div>
+                            <p class="small text-secondary mb-0">{{ factor.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predicted Location Map -->
+            {% if map_html %}
+            <div class="card shadow-sm border p-0 map-frame-container" style="height: 380px;">
+                <div class="w-100 h-100 position-relative">
+                    {{ map_html | safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Initial Instruction Placeholder -->
+            <div class="card shadow-sm border h-100 d-flex align-items-center justify-content-center p-5 text-center bg-white">
+                <div class="py-5">
+                    <i class="fa-solid fa-crosshairs text-primary display-3 mb-3"></i>
+                    <h4 class="fw-bold">Awaiting Input Parameters</h4>
+                    <p class="text-muted max-w-sm">
+                        Select a corridor preset above or adjust parameters, then click <b>"PREDICT ACCIDENT RISK"</b> to trigger Random Forest inference with GIS coordinate mapping.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

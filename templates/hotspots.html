@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Dynamic Hotspot Prediction – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-fire-flame-curved text-danger me-2"></i> Dynamic Corridor Hotspot Prediction</h2>
+            <p class="text-muted mb-0">Simulate temporal & meteorological scenarios across all metropolitan corridors</p>
+        </div>
+    </div>
+
+    <!-- Scenario Parameter Selection Card -->
+    <div class="card shadow-sm border mb-4 bg-white">
+        <div class="card-header bg-white fw-bold">
+            <i class="fa-solid fa-cloud-bolt text-primary me-2"></i> Scenario Simulation Controls
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('hotspots') }}" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Target Date</label>
+                    <input type="date" name="date" class="form-control" value="{{ selected_date }}" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Target Time</label>
+                    <input type="time" name="time" class="form-control" value="{{ selected_time }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Weather Condition</label>
+                    <select name="weather" class="form-select">
+                        <option value="Clear" {% if selected_weather == 'Clear' %}selected{% endif %}>Clear / Sunny</option>
+                        <option value="Rainy" {% if selected_weather == 'Rainy' %}selected{% endif %}>Heavy Rain / Monsoon</option>
+                        <option value="Foggy" {% if selected_weather == 'Foggy' %}selected{% endif %}>Dense Winter Fog</option>
+                        <option value="Thunderstorm" {% if selected_weather == 'Thunderstorm' %}selected{% endif %}>Severe Thunderstorm</option>
+                        <option value="Overcast" {% if selected_weather == 'Overcast' %}selected{% endif %}>Overcast Skies</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Traffic Density</label>
+                    <select name="traffic" class="form-select">
+                        <option value="Low" {% if selected_traffic == 'Low' %}selected{% endif %}>Low (Off-peak)</option>
+                        <option value="Medium" {% if selected_traffic == 'Medium' %}selected{% endif %}>Medium (Regular)</option>
+                        <option value="High" {% if selected_traffic == 'High' %}selected{% endif %}>High (Rush Hour)</option>
+                        <option value="Severe Congestion" {% if selected_traffic == 'Severe Congestion' %}selected{% endif %}>Severe Congestion</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-danger w-100 fw-bold">
+                        <i class="fa-solid fa-arrows-rotate me-1"></i> SIMULATE
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Map & Ranked Table Row -->
+    <div class="row g-4">
+        <!-- Dynamic Map -->
+        <div class="col-xl-6">
+            <div class="card shadow-sm border p-0 map-frame-container" style="height: 600px;">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-map text-primary me-2"></i> Predicted Spatial Risk Heatmap</span>
+                    <div>
+                        <span class="badge bg-danger">Red: High</span>
+                        <span class="badge bg-warning text-dark">Orange: Medium</span>
+                        <span class="badge bg-success">Green: Low</span>
+                    </div>
+                </div>
+                <div class="w-100 h-100 position-relative">
+                    {{ map_html | safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranked Hotspots Table -->
+        <div class="col-xl-6">
+            <div class="card shadow-sm border h-100">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-ranking-star text-warning me-2"></i> Ranked Corridor Blackspots</span>
+                    <small class="text-muted">Sorted by Model Probability Descending</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 60px;">Rank</th>
+                                    <th>Location</th>
+                                    <th>Risk Level</th>
+                                    <th>Probability</th>
+                                    <th>Traffic</th>
+                                    <th>Weather</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in ranked_zones %}
+                                <tr>
+                                    <td class="fw-bold text-center">
+                                        {% if item.rank == 1 %}
+                                            <span class="badge bg-danger rounded-circle p-2">#1</span>
+                                        {% elif item.rank == 2 %}
+                                            <span class="badge bg-warning text-dark rounded-circle p-2">#2</span>
+                                        {% elif item.rank == 3 %}
+                                            <span class="badge bg-info text-dark rounded-circle p-2">#3</span>
+                                        {% else %}
+                                            #{{ item.rank }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ item.location }}</div>
+                                        <small class="text-muted">{{ item.road_condition }} • {{ item.speed_limit }} km/h</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if item.risk_level == 'High' %}badge-risk-high{% elif item.risk_level == 'Medium' %}badge-risk-medium{% else %}badge-risk-low{% endif %} px-2 py-1">
+                                            {{ item.risk_level }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold">
+                                        {{ (item.probability * 100) | round(1) }}%
+                                    </td>
+                                    <td>{{ item.traffic_volume }} vph</td>
+                                    <td>{{ item.weather }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

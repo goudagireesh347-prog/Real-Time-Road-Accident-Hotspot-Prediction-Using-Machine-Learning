@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In – RoadSafe AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="avatar-lg bg-primary text-white rounded-circle d-inline-flex p-3 mb-2">
+                            <i class="fa-solid fa-shield-halved fs-2"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark">Portal Access</h3>
+                        <p class="text-muted small">Sign in to RoadSafe AI Spatial Prediction Console</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('login') }}">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-user text-muted"></i></span>
+                                <input type="text" id="loginUsername" name="username" class="form-control" placeholder="admin or planner" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold text-muted">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-muted"></i></span>
+                                <input type="password" id="loginPassword" name="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm mb-3">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i> Sign In
+                        </button>
+                    </form>
+
+                    <!-- Quick Demo Fill Buttons for Examiners / Evaluators -->
+                    <div class="p-3 bg-light rounded border text-center mt-3">
+                        <small class="fw-bold text-muted d-block mb-2 text-uppercase">1-Click Evaluation Credentials</small>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="fillCreds('admin', 'admin123')">
+                                <i class="fa-solid fa-user-gear me-1"></i> Demo Admin
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillCreds('planner', 'planner123')">
+                                <i class="fa-solid fa-user-shield me-1"></i> Demo Planner
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillCreds(u, p) {
+    document.getElementById('loginUsername').value = u;
+    document.getElementById('loginPassword').value = p;
+}
+</script>
+{% endblock %}
